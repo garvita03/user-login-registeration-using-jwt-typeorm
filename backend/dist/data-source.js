@@ -9,7 +9,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     host: "localhost",
     port: 5432,
     username: "postgres",
-    password: "//password",
+    password: "Garvi36_",
     database: "newdb",
     synchronize: true,
     logging: true,

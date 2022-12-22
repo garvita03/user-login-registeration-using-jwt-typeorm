@@ -23,22 +23,57 @@ app.get("/users", async (req, res) => {
     res.json(users);
 });
 //Register a user in DB
-app.post("/register", async (req, res) => {
-    const user = data_source_1.AppDataSource.getRepository(Users_1.Users).create(req.body);
-    const result = await data_source_1.AppDataSource.getRepository(Users_1.Users).save(user);
-    return res.send(result);
+app.post("/auth/register", async (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+    const name = req.body.name;
+    if (!username || !password || !name) {
+        return res.send('Please fill complete details');
+    }
+    const users = data_source_1.AppDataSource.getRepository(Users_1.Users);
+    const userExists = await users.findOneBy({ username: username });
+    if (userExists) {
+        return res.send('The user already exists');
+    }
+    else {
+        const user = users.create(req.body);
+        const result = await users.save(user);
+        return res.send('User registered');
+    }
 });
 //Login to the database
-app.post("/login", (req, res) => {
+app.post("/auth/login", async (req, res) => {
     const username = req.body.username;
-    const token = jsonwebtoken_1.default.sign(username, "This-Is-The-SECRET-Key");
-    res.send(token);
+    const password = req.body.password;
+    const users = data_source_1.AppDataSource.getRepository(Users_1.Users);
+    const userValid = await users.findOneBy({ username: username });
+    if (!userValid) {
+        return res.send("Invalid username");
+    }
+    else {
+        if (userValid.password !== password) {
+            return res.send("Incorrect password");
+        }
+        else {
+            const token = jsonwebtoken_1.default.sign(username, "This-Is-The-SECRET-Key");
+            res.send({ token: token });
+            console.log(token);
+        }
+    }
 });
 //Function - validate a token, return username
 const validate = (req) => {
     let token = req.headers.authorization.split(" ")[1];
-    const verify = jsonwebtoken_1.default.verify(token, "This-Is-The-SECRET-Key");
-    return verify;
+    token = token.split("").slice(1, token.length - 1).join('');
+    console.log(token, typeof token);
+    try {
+        const verify = jsonwebtoken_1.default.verify(token, "This-Is-The-SECRET-Key");
+        console.log('verify: ', verify);
+        return verify;
+    }
+    catch (err) {
+        console.log('Unable to verify token');
+    }
 };
 //Login window
 app.get("/login/me", (req, res) => {
@@ -51,7 +86,7 @@ app.get("/login/me", (req, res) => {
     }
 });
 //Update the name field of a user
-app.post("/update", async (req, res) => {
+app.post("/auth/update", async (req, res) => {
     const verify = validate(req);
     if (!verify) {
         res.sendStatus(401);
@@ -59,6 +94,7 @@ app.post("/update", async (req, res) => {
     else {
         const userUsername = verify;
         const newName = req.body.name;
+        console.log('new name is: ', newName);
         await data_source_1.AppDataSource.createQueryBuilder()
             .update(Users_1.Users)
             .set({ name: newName })
@@ -68,4 +104,4 @@ app.post("/update", async (req, res) => {
         res.status(200).send("User has been updated");
     }
 });
-app.listen(3000);
+app.listen(5000, () => { console.log('Listening at 5000'); });

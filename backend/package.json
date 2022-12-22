@@ -19,6 +19,7 @@
     "typeorm": "^0.3.10"
   },
   "devDependencies": {
+    "@types/jest": "^29.2.3",
     "nodemon": "^2.0.20"
   }
 }
